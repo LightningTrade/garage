@@ -1,10 +1,10 @@
 """Trust Region Policy Optimization."""
-from garage.tf.algos.npo import NPOTaskEmbedding
+from garage.tf.algos.npo_task_embedding import NPOTaskEmbedding
 from garage.tf.optimizers import ConjugateGradientOptimizer
 from garage.tf.optimizers import PenaltyLbfgsOptimizer
 
 
-class PPOTaskEmbedding(NPOTaskEmbedding):
+class TRPOTaskEmbedding(NPOTaskEmbedding):
     """Trust Region Policy Optimization with Task Embedding."""
 
     def __init__(self,
@@ -28,15 +28,19 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
                  use_softplus_entropy=False,
                  use_neg_logli_entropy=False,
                  stop_entropy_gradient=False,
-                 stop_ce_graident=False,
+                 stop_ce_gradient=False,
                  entropy_method='no_entropy',
                  flatten_input=True,
                  inference=None,
                  inference_optimizer=None,
+                 inference_optimizer_args=None,
                  inference_ce_coeff=0.0,
                  kl_constraint='hard',
                  name='TRPOTaskEmbedding'):
         self._kl_constraint = kl_constraint
+
+        optimizer, optimizer_args = self._build_optimizer(optimizer, optimizer_args)
+        inference_optimizer, inference_optimizer_args = self._build_optimizer(inference_optimizer, inference_optimizer_args)
 
         super().__init__(env_spec=env_spec,
                          policy=policy,
@@ -57,11 +61,12 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
                          use_softplus_entropy=use_softplus_entropy,
                          use_neg_logli_entropy=use_neg_logli_entropy,
                          stop_entropy_gradient=stop_entropy_gradient,
-                         stop_ce_graident=stop_ce_graident,
+                         stop_ce_gradient=stop_ce_gradient,
                          entropy_method=entropy_method,
                          flatten_input=flatten_input,
                          inference=inference,
                          inference_optimizer=inference_optimizer,
+                         inference_optimizer_args=inference_optimizer_args,
                          inference_ce_coeff=inference_ce_coeff,
                          name=name)
 
@@ -74,4 +79,4 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
                 optimizer = PenaltyLbfgsOptimizer
             else:
                 raise ValueError('Invalid kl_constraint')
-        return optimizer(**optimizer_args)
+        return optimizer, optimizer_args

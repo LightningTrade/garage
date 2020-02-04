@@ -7,7 +7,7 @@ import numpy as np
 
 from garage import TaskEmbeddingTrajectoryBatch
 from garage.experiment import deterministic
-from garage.sampler import Worker
+from garage.sampler.worker import Worker
 from garage.sampler.env_update import EnvUpdate
 
 
@@ -108,9 +108,8 @@ class TaskEmbeddingWorker(Worker):
         self._path_length = 0
         self._prev_obs = self.env.reset()
         self.agent.reset()
-        # TODO(suchang): Make sure MultitaskEnv has active_task_one_hot
-        self._t = env.active_task_one_hot
-    	self._z, self._latent_info = self.agent.get_latent(t)
+        self._t = self.env.active_task_one_hot
+        self._z, self._latent_info = self.agent.get_latent(self._t)
 
     def step_rollout(self):
         """Take a single time-step in the current rollout.
@@ -126,10 +125,10 @@ class TaskEmbeddingWorker(Worker):
             self._observations.append(self._prev_obs)
             self._rewards.append(r)
             self._actions.append(a)
-            self._tasks.append(t)
-        	self._latents.append(self.agent.latent_space.flatten(self._z))
-        	for k, v in self._latent_info.items():
-        		self._latent_infos[k].append(v)
+            self._tasks.append(self._t)
+            self._latents.append(self.agent.latent_space.flatten(self._z))
+            for k, v in self._latent_info.items():
+                self._latent_infos[k].append(v)
             for k, v in agent_info.items():
                 self._agent_infos[k].append(v)
             for k, v in env_info.items():
@@ -147,8 +146,8 @@ class TaskEmbeddingWorker(Worker):
         """Collect the current rollout, clearing the internal buffer.
 
         Returns:
-            garage.TrajectoryBatch: A batch of the trajectories completed since
-                the last call to collect_rollout().
+            garage.TaskEmbeddingTrajectoryBatch: A batch of the trajectories
+                completed since the last call to collect_rollout().
 
         """
         observations = self._observations
@@ -172,7 +171,7 @@ class TaskEmbeddingWorker(Worker):
         latent_infos = self._latent_infos
         self._latent_infos = defaultdict(list)
         for k, v in latent_infos.items():
-        	latent_infos[k] = np.asarray(v)
+            latent_infos[k] = np.asarray(v)
         for k, v in agent_infos.items():
             agent_infos[k] = np.asarray(v)
         for k, v in env_infos.items():
@@ -180,7 +179,7 @@ class TaskEmbeddingWorker(Worker):
         lengths = self._lengths
         self._lengths = []
         return TaskEmbeddingTrajectoryBatch(
-        	self.env.spec, np.asarray(observations),
+            self.env.spec, np.asarray(observations),
             np.asarray(last_observations),
             np.asarray(actions), np.asarray(rewards),
             np.asarray(terminals), dict(env_infos),
@@ -192,7 +191,7 @@ class TaskEmbeddingWorker(Worker):
         """Sample a single rollout of the agent in the environment.
 
         Returns:
-            garage.TrajectoryBatch: The collected trajectory.
+            garage.TaskEmbeddingTrajectoryBatch: The collected trajectory.
 
         """
         self.start_rollout()

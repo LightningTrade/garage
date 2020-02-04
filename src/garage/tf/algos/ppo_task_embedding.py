@@ -1,7 +1,6 @@
 """Trust Region Policy Optimization."""
-from garage.tf.algos.npo import NPOTaskEmbedding
-from garage.tf.optimizers import ConjugateGradientOptimizer
-from garage.tf.optimizers import PenaltyLbfgsOptimizer
+from garage.tf.algos.npo_task_embedding import NPOTaskEmbedding
+from garage.tf.optimizers import FirstOrderOptimizer
 
 
 class PPOTaskEmbedding(NPOTaskEmbedding):
@@ -28,14 +27,16 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
                  use_softplus_entropy=False,
                  use_neg_logli_entropy=False,
                  stop_entropy_gradient=False,
-                 stop_ce_graident=False,
+                 stop_ce_gradient=False,
                  entropy_method='no_entropy',
                  flatten_input=True,
                  inference=None,
                  inference_optimizer=None,
+                 inference_optimizer_args=None,
                  inference_ce_coeff=0.0,
                  name='PPOTaskEmbedding'):
-        self._kl_constraint = kl_constraint
+        optimizer, optimizer_args = self._build_optimizer(optimizer, optimizer_args)
+        inference_optimizer, inference_optimizer_args = self._build_optimizer(inference_optimizer, inference_optimizer_args)
 
         super().__init__(env_spec=env_spec,
                          policy=policy,
@@ -56,11 +57,12 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
                          use_softplus_entropy=use_softplus_entropy,
                          use_neg_logli_entropy=use_neg_logli_entropy,
                          stop_entropy_gradient=stop_entropy_gradient,
-                         stop_ce_graident=stop_ce_graident,
+                         stop_ce_gradient=stop_ce_gradient,
                          entropy_method=entropy_method,
                          flatten_input=flatten_input,
                          inference=inference,
                          inference_optimizer=inference_optimizer,
+                         inference_optimizer_args=inference_optimizer_args,
                          inference_ce_coeff=inference_ce_coeff,
                          name=name)
 
@@ -70,4 +72,4 @@ class PPOTaskEmbedding(NPOTaskEmbedding):
             optimizer = FirstOrderOptimizer
         if optimizer_args is None:
             optimizer_args = dict()
-        return optimizer(**optimizer_args)
+        return optimizer, optimizer_args

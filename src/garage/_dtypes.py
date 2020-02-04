@@ -495,7 +495,7 @@ class TimeStep(
 
 
 class TaskEmbeddingTrajectoryBatch(
-        collections.namedtuple('TaskEmbeddingTrajectoryBatch',''
+        collections.namedtuple('TaskEmbeddingTrajectoryBatch',
                                 TrajectoryBatch._fields \
                                 + ('tasks', 'latents', 'latent_infos'))):
     __slots__ = ()
@@ -515,13 +515,13 @@ class TaskEmbeddingTrajectoryBatch(
 
     @classmethod
     def concatenate(cls, *batches):
-        """Create a TrajectoryBatch by concatenating TrajectoryBatches.
+        """Create a TaskEmbeddingTrajectoryBatch by concatenating TaskEmbeddingTrajectoryBatches.
 
         Args:
-            batches (list[TrajectoryBatch]): Batches to concatenate.
+            batches (list[TaskEmbeddingTrajectoryBatch]): Batches to concatenate.
 
         Returns:
-            TrajectoryBatch: The concatenation of the batches.
+            TaskEmbeddingTrajectoryBatch: The concatenation of the batches.
 
         """
         if __debug__:
@@ -530,8 +530,8 @@ class TaskEmbeddingTrajectoryBatch(
                     batches[0].env_infos.keys()))
                 assert (set(b.agent_infos.keys()) == set(
                     batches[0].agent_infos.keys()))
-                assert (set(b.latent_infos.keys() == set(
-                    batches[0].latent_infos.keys())))
+                assert (set(b.latent_infos.keys()) == set(
+                    batches[0].latent_infos.keys()))
         env_infos = {
             k: np.concatenate([b.env_infos[k] for b in batches])
             for k in batches[0].env_infos.keys()
@@ -557,12 +557,12 @@ class TaskEmbeddingTrajectoryBatch(
             latent_infos)
 
     def split(self):
-        """Split a TrajectoryBatch into a list of TrajectoryBatches.
+        """Split a TaskEmbeddingTrajectoryBatch into a list of TaskEmbeddingTrajectoryBatches.
 
         The opposite of concatenate.
 
         Returns:
-            list[TrajectoryBatch]: A list of TrajectoryBatches, with one
+            list[TaskEmbeddingTrajectoryBatch]: A list of TaskEmbeddingTrajectoryBatches, with one
                 trajectory per batch.
 
         """
@@ -643,14 +643,15 @@ class TaskEmbeddingTrajectoryBatch(
                 'latents':
                 self.latents[start:stop],
                 'latent_infos':
-                self.latent_infos[start:stop],
+                {k: v[start:stop]
+                 for (k, v) in self.latent_infos.items()},
             })
             start = stop
         return trajectories
 
     @classmethod
     def from_trajectory_list(cls, env_spec, paths):
-        """Create a TrajectoryBatch from a list of trajectories.
+        """Create a TaskEmbeddingTrajectoryBatch from a list of trajectories.
 
         Args:
             env_spec (garage.envs.EnvSpec): Specification for the environment

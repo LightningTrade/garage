@@ -317,6 +317,6 @@ def sliding_window(t, window, step_size, smear=False):
 
     # Optionally smear the last element to preserve the first dimension
     if smear:
-        t_win = tensor_utils.pad_tensor(t_win, t.shape[0], mode='last')
+        t_win = pad_tensor(t_win, t.shape[0], mode='last')
 
     return t_win
